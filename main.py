@@ -11,7 +11,10 @@ app.register_blueprint(api_bp)
 
 @app.get("/")
 def read_root():
-    return app.send_static_file('index.html')
+    # 强制使用绝对路径查找文件
+    base_path = os.path.dirname(os.path.abspath(__file__))
+    return send_from_directory(os.path.join(base_path, 'public'), 'index.html')
+
 
 
 @app.get("/health")
