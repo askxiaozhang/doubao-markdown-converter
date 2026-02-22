@@ -1,31 +1,65 @@
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fvercel%2Ftree%2Fmain%2Fexamples%2Fflask&demo-title=Flask%20API&demo-description=Use%20Flask%20API%20on%20Vercel%20with%20Serverless%20Functions%20using%20the%20Python%20Runtime.&demo-url=https%3A%2F%2Fvercel-plus-flask.vercel.app%2F&demo-image=https://assets.vercel.com/image/upload/v1669994600/random/python.png)
+# 豆包 Markdown 转换器 (Doubao Markdown Converter)
 
-# Flask + Vercel
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzhangchang%2Fdoubao-markdown-convert)
 
-This example shows how to use Flask on Vercel with Serverless Functions using the [Python Runtime](https://vercel.com/docs/concepts/functions/serverless-functions/runtimes/python).
+一个轻量级的 Web 工具，专门用于将豆包（Doubao）导出的 Markdown 内容转换为标准 Markdown 格式，特别是针对数学公式的规范化处理。
 
-## Demo
+## 🚀 核心功能
 
-https://vercel-plus-flask.vercel.app/
+- **智能公式转换**：
+  - **独立行公式**：将 `\( ... \)` 自动提升为标准块级公式 `$$ ... $$`。
+  - **行内公式降级**：检测嵌入在文字中的 `$$ ... $$`（豆包常用格式），自动转换为标准行内公式 `$ ... $`，确保在 GitHub、Obsidian 等工具中完美预览。
+- **实时转换**：无需点击按钮，输入即所得。
+- **暗黑系 UI**：基于现代审美设计的沉浸式交互界面。
+- **统计功能**：实时显示字符变更和转换处数。
 
-## How it Works
+## 🛠️ 技术栈
 
-This example uses the Web Server Gateway Interface (WSGI) with Flask to handle requests on Vercel with Serverless Functions.
+- **前端**：HTML5, Vanilla CSS (Custom Properties), Javascript (ES6+)
+- **后端**：Python, Flask (部署于 Vercel 无服务函数)
+- **部署**：Vercel
 
-## Running Locally
+## 📖 转换规则示例
 
-```bash
-npm i -g vercel
-python -m venv .venv
-source .venv/bin/activate
-uv sync  # or alternatively pip install flask gunicorn
-gunicorn main:app
+### 1. 独立行处理
+**输入 (豆包):**
+```text
+\(E = mc^2\)
+```
+**输出 (标准):**
+```text
+$$E = mc^2$$
 ```
 
-Your Flask application is now available at `http://localhost:3000`.
+### 2. 行内处理
+**输入 (豆包):**
+```text
+已知 $$P(A)$$ 的概率...
+```
+**输出 (标准):**
+```text
+已知 $P(A)$ 的概率...
+```
 
-## One-Click Deploy
+## 💻 本地开发
 
-Deploy the example using [Vercel](https://vercel.com?utm_source=github&utm_medium=readme&utm_campaign=vercel-examples):
+1. **环境准备**：
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate
+   pip install flask
+   ```
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fvercel%2Ftree%2Fmain%2Fexamples%2Fflask&demo-title=Flask%20API&demo-description=Use%20Flask%20API%20on%20Vercel%20with%20Serverless%20Functions%20using%20the%20Python%20Runtime.&demo-url=https%3A%2F%2Fvercel-plus-flask.vercel.app%2F&demo-image=https://assets.vercel.com/image/upload/v1669994600/random/python.png)
+2. **启动服务**：
+   ```bash
+   vercel dev
+   # 或者
+   python api/index.py
+   ```
+
+## ☁️ 部署到 Vercel
+
+本项目适配 Vercel Python Runtime。只需推送代码到 GitHub 并关联 Vercel 即可一键部署。
+
+---
+Created by [zhangchang](https://github.com/zhangchang)

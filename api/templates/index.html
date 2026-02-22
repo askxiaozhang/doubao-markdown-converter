@@ -418,16 +418,74 @@
             animation: pulse 2s ease-in-out infinite;
         }
 
-        @keyframes pulse {
+        /* Intro Section Styles */
+        .intro-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: linear-gradient(145deg, rgba(108, 92, 231, 0.05) 0%, rgba(0, 206, 201, 0.05) 100%);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            animation: fadeIn 0.8s ease-out;
+        }
 
-            0%,
-            100% {
-                opacity: 0.4;
+        .intro-section h1 {
+            font-size: 1.2rem;
+            margin-bottom: 0.75rem;
+            color: var(--accent-light);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .intro-section p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            line-height: 1.6;
+        }
+
+        .intro-section ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .intro-section li {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .intro-section li::before {
+            content: '✦';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+            font-size: 0.8rem;
+        }
+
+        .intro-section b,
+        .intro-section strong {
+            color: var(--success);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
             }
 
-            50% {
+            to {
                 opacity: 1;
-                box-shadow: 0 0 8px var(--success-glow);
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                height: auto;
             }
         }
     </style>
@@ -449,6 +507,16 @@
     </header>
 
     <div class="container">
+        <div class="intro-section">
+            <h1>为什么需要这个工具？</h1>
+            <p>豆包（Doubao）导出的 Markdown 在数学公式的处理上与标准 Markdown（如 GitHub, Obsidian）略有不同。此工具通过以下规则进行智能转换：</p>
+            <ul>
+                <li><strong>自动纠正：</strong> 将豆包习惯使用的 <code>\( ... \)</code> 或 <code>$$ ... $$</code> 统一规范化。</li>
+                <li><strong>块级公式：</strong> 如果公式占据整行，转换为标准 <code>$$ ... $$</code> 块。</li>
+                <li><strong>行内公式：</strong> 如果公式嵌入在文字中，自动降级为单 <code>$ ... $</code>，防止排版溢出或解析错误。</li>
+            </ul>
+        </div>
+
         <div class="toolbar">
             <button class="btn btn-secondary" onclick="loadExample()" title="加载示例">
                 📄 示例
