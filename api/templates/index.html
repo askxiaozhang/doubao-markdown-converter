@@ -547,21 +547,30 @@
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
 
-                // Check if the entire line is a single formula:
-                // optional whitespace, then \(...\), then optional whitespace
-                const blockMatch = line.match(/^(\s*)\\{1}\((.+?)\\{1}\)(\s*)$/);
+                // Check if it's a block formula: only whitespace + formula
+                // Matches ^\s*\(...\)\s*$ OR ^\s*$$...$$\s*$
+                const blockMatch = line.match(/^(\s*)(?:\\\(|\$\$)(.+?)(?:\\\)|\$\$)(\s*)$/);
+
                 if (blockMatch) {
-                    // It's a standalone block formula
+                    // It's a standalone block formula - always use $$ ... $$
                     resultLines.push(blockMatch[1] + '$$' + blockMatch[2] + '$$' + blockMatch[3]);
                     count++;
                 } else {
-                    // Replace all inline \(...\) with $...$
+                    // Inline replacement: convert both \(...\) and $$...$$ to $...$
                     let converted = line;
-                    // Use a regex that matches \( ... \) but we process it as inline
-                    converted = line.replace(/\\\((.+?)\\\)/g, (match, inner) => {
+
+                    // Replace \( ... \)
+                    converted = converted.replace(/\\\((.+?)\\\)/g, (match, inner) => {
                         count++;
                         return '$' + inner + '$';
                     });
+
+                    // Replace $$ ... $$ (when not a standalone line)
+                    converted = converted.replace(/\$\$(.+?)\$\$/g, (match, inner) => {
+                        count++;
+                        return '$' + inner + '$';
+                    });
+
                     resultLines.push(converted);
                 }
             }
@@ -620,16 +629,19 @@
         function loadExample() {
             inputEl.value = `公式：
 
-\\(P(x_{t+1} \\mid x_{t-1}) = \\sum_{x_t} P(x_{t+1} \\mid x_t) P(x_t \\mid x_{t-1})\\)
+$$P(x_1,\\dots,x_T) = \\prod_{t=1}^T P(x_t \\mid x_{t-1})$$
 
-还是用天气：
+（当$$P(x_1 \\mid x_0)=P(x_1)$$，也就是第一步只和初始状态有关）
 
-我们想算：**已知前天是晴天（**\\(x_{t-1}=S\\)**），明天是雨天（**\\(x_{t+1}=R\\)**）的概率**。
+用天气举例：
 
-行内公式示例：能量公式 \\(E = mc^2\\) 是爱因斯坦提出的。
+我们想算“第一天晴天 → 第二天阴天 → 第三天雨天”的概率：
 
-独立行公式：
+- 第一天晴天：$$P(S)$$
 
+行内公式示例：能量公式 \\(E = mc^2\\) 也是支持的。
+
+混合示例：
 \\(\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}\\)`;
             convertMarkdown();
             showToast('✓ 已加载示例');
