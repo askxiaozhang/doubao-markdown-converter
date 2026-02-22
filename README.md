@@ -1,6 +1,6 @@
 # 豆包 Markdown 转换器 (Doubao Markdown Converter)
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzhangchang%2Fdoubao-markdown-convert)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Faskxiaozhang%2Fdoubao-markdown-converter)
 
 一个轻量级的 Web 工具，专门用于将豆包（Doubao）导出的 Markdown 内容转换为标准 Markdown 格式，特别是针对数学公式的规范化处理。
 
@@ -62,4 +62,4 @@ $$E = mc^2$$
 本项目适配 Vercel Python Runtime。只需推送代码到 GitHub 并关联 Vercel 即可一键部署。
 
 ---
-Created by [zhangchang](https://github.com/zhangchang)
+Created by [askxiaozhang](https://github.com/askxiaozhang)
