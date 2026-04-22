@@ -1,898 +1,893 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>豆包 Markdown 转换器</title>
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-        rel="stylesheet">
-    <style>
-        :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #12121a;
-            --bg-card: #16161f;
-            --bg-input: #1a1a25;
-            --border: #2a2a3a;
-            --border-hover: #3a3a5a;
-            --text-primary: #e8e8f0;
-            --text-secondary: #8888a8;
-            --text-muted: #5a5a7a;
-            --accent: #6c5ce7;
-            --accent-glow: rgba(108, 92, 231, 0.25);
-            --accent-light: #a29bfe;
-            --success: #00cec9;
-            --success-glow: rgba(0, 206, 201, 0.2);
-            --gradient-start: #6c5ce7;
-            --gradient-end: #00cec9;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Animated background */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background:
-                radial-gradient(ellipse 600px 400px at 20% 20%, rgba(108, 92, 231, 0.08), transparent),
-                radial-gradient(ellipse 500px 300px at 80% 80%, rgba(0, 206, 201, 0.06), transparent);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        /* Header */
-        header {
-            position: relative;
-            z-index: 10;
-            border-bottom: 1px solid var(--border);
-            backdrop-filter: blur(20px);
-            background: rgba(10, 10, 15, 0.8);
-        }
-
-        nav {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 1rem 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            text-decoration: none;
-        }
-
-        .logo-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            box-shadow: 0 4px 15px var(--accent-glow);
-        }
-
-        .logo-text {
-            font-size: 1.15rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #fff, var(--text-secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .badge {
-            padding: 0.2rem 0.6rem;
-            border-radius: 20px;
-            font-size: 0.65rem;
-            font-weight: 600;
-            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-            color: #fff;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-
-        .github-link {
-            color: var(--text-secondary);
-            font-size: 1.4rem;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-        }
-
-        .github-link:hover {
-            color: #fff;
-            transform: translateY(-2px);
-        }
-
-        /* Main content */
-        .container {
-            position: relative;
-            z-index: 1;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 1.5rem 2rem 2rem;
-            display: flex;
-            flex-direction: column;
-            height: calc(100vh - 70px);
-        }
-
-        /* Toolbar */
-        .toolbar {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            margin-bottom: 1.25rem;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.6rem 1.25rem;
-            border-radius: 10px;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: none;
-            outline: none;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-            color: #fff;
-            box-shadow: 0 4px 20px var(--accent-glow);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 30px var(--accent-glow);
-        }
-
-        .btn-primary:active {
-            transform: translateY(0);
-        }
-
-        .btn-secondary {
-            background: var(--bg-card);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-        }
-
-        .btn-secondary:hover {
-            border-color: var(--border-hover);
-            background: var(--bg-input);
-            transform: translateY(-1px);
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: #0a0a0f;
-            box-shadow: 0 4px 20px var(--success-glow);
-        }
-
-        .btn-success:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 30px var(--success-glow);
-        }
-
-        /* Editor area */
-        .editor-wrapper {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.25rem;
-            min-height: 0;
-        }
-
-        .panel {
-            display: flex;
-            flex-direction: column;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            overflow: hidden;
-            transition: border-color 0.3s ease;
-        }
-
-        .panel:hover {
-            border-color: var(--border-hover);
-        }
-
-        .panel:focus-within {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px var(--accent-glow);
-        }
-
-        .panel-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.85rem 1.25rem;
-            border-bottom: 1px solid var(--border);
-            background: var(--bg-secondary);
-        }
-
-        .panel-title {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-        }
-
-        .panel-title .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-
-        .input-dot {
-            background: var(--accent);
-            box-shadow: 0 0 8px var(--accent-glow);
-        }
-
-        .output-dot {
-            background: var(--success);
-            box-shadow: 0 0 8px var(--success-glow);
-        }
-
-        .panel-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .icon-btn {
-            width: 32px;
-            height: 32px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: var(--bg-card);
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 0.85rem;
-        }
-
-        .icon-btn:hover {
-            border-color: var(--border-hover);
-            color: var(--text-primary);
-            background: var(--bg-input);
-        }
-
-        textarea {
-            flex: 1;
-            width: 100%;
-            padding: 1.25rem;
-            background: transparent;
-            border: none;
-            outline: none;
-            resize: none;
-            color: var(--text-primary);
-            font-family: 'JetBrains Mono', 'SF Mono', Monaco, monospace;
-            font-size: 0.85rem;
-            line-height: 1.7;
-            tab-size: 4;
-        }
-
-        textarea::placeholder {
-            color: var(--text-muted);
-        }
-
-        .output-area {
-            flex: 1;
-            padding: 1.25rem;
-            overflow-y: auto;
-            font-family: 'JetBrains Mono', 'SF Mono', Monaco, monospace;
-            font-size: 0.85rem;
-            line-height: 1.7;
-            white-space: pre-wrap;
-            word-break: break-word;
-            color: var(--text-primary);
-        }
-
-        .output-area:empty::before {
-            content: '转换后的标准 Markdown 将显示在这里...';
-            color: var(--text-muted);
-        }
-
-        /* Toast */
-        .toast {
-            position: fixed;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            padding: 0.75rem 1.5rem;
-            background: var(--bg-card);
-            border: 1px solid var(--success);
-            border-radius: 12px;
-            color: var(--success);
-            font-size: 0.8rem;
-            font-weight: 600;
-            font-family: 'Inter', sans-serif;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-            opacity: 0;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 100;
-            pointer-events: none;
-        }
-
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--border-hover);
-        }
-
-        /* Stats bar */
-        .stats {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 2rem;
-            padding: 0.7rem;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            letter-spacing: 0.3px;
-        }
-
-        .stats span {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-
-        /* Responsive */
-        @media (max-width: 900px) {
-            .editor-wrapper {
-                grid-template-columns: 1fr;
-            }
-
-            .container {
-                padding: 1rem;
-                height: auto;
-            }
-
-            .panel {
-                min-height: 40vh;
-            }
-
-            nav {
-                padding: 0.75rem 1rem;
-            }
-        }
-
-        /* Auto-convert indicator */
-        .auto-indicator {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            padding: 0.3rem 0.7rem;
-            border-radius: 20px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-        }
-
-        .auto-indicator .pulse {
-            width: 6px;
-            height: 6px;
-            background: var(--success);
-            border-radius: 50%;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        /* Intro Section Styles */
-        .intro-section {
-            margin-bottom: 2rem;
-            padding: 1.5rem;
-            background: linear-gradient(145deg, rgba(108, 92, 231, 0.05) 0%, rgba(0, 206, 201, 0.05) 100%);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            animation: fadeIn 0.8s ease-out;
-        }
-
-        .intro-section h1 {
-            font-size: 1.2rem;
-            margin-bottom: 0.75rem;
-            color: var(--accent-light);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .intro-section p {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.75rem;
-            line-height: 1.6;
-        }
-
-        .intro-section ul {
-            list-style: none;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1rem;
-        }
-
-        .intro-section li {
-            font-size: 0.85rem;
-            color: var(--text-primary);
-            padding-left: 1.5rem;
-            position: relative;
-        }
-
-        .intro-section li::before {
-            content: '✦';
-            position: absolute;
-            left: 0;
-            color: var(--success);
-            font-size: 0.8rem;
-        }
-
-        .intro-section b,
-        .intro-section strong {
-            color: var(--success);
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @media (max-width: 900px) {
-            .container {
-                height: auto;
-            }
-        }
-
-        /* Donation Widget Styles */
-        .donation-widget {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            z-index: 100;
-        }
-
-        .donation-button {
-            width: 50px;
-            height: 50px;
-            border-radius: 25px;
-            background: linear-gradient(135deg, #ff9f43, #ff6b6b);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(255, 107, 107, 0.4);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            font-size: 1.5rem;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .donation-button:hover {
-            transform: scale(1.1) rotate(10deg);
-            box-shadow: 0 6px 25px rgba(255, 107, 107, 0.6);
-        }
-
-        .donation-card {
-            position: absolute;
-            bottom: calc(100% + 1.25rem);
-            right: 0;
-            width: 400px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 18px;
-            padding: 1.5rem;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(20px) scale(0.9);
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-            backdrop-filter: blur(10px);
-        }
-
-        .donation-widget:hover .donation-card {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0) scale(1);
-        }
-
-        .donation-card h3 {
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
-            color: #fff;
-            text-align: center;
-        }
-
-        .donation-card p {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            text-align: center;
-            margin-bottom: 1.25rem;
-        }
-
-        .qr-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-
-        .qr-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .qr-placeholder {
-            width: 100%;
-            aspect-ratio: 1;
-            background: #f0f0f0;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7rem;
-            color: #333;
-            font-weight: 600;
-            text-align: center;
-            padding: 0.5rem;
-            border: 2px dashed #ccc;
-        }
-
-        .qr-item span {
-            font-size: 0.7rem;
-            font-weight: 600;
-        }
-
-        .wechat-text {
-            color: #07c160;
-        }
-
-        .alipay-text {
-            color: #1677ff;
-        }
-
-        @media (max-width: 600px) {
-            .donation-widget {
-                bottom: 1rem;
-                right: 1rem;
-            }
-
-            .donation-card {
-                right: -0.5rem;
-                width: 240px;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>定投复利计算器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=DM+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f7f4ef;
+    --card: #ffffff;
+    --ink: #1a1510;
+    --ink2: #5a5248;
+    --ink3: #9a9088;
+    --accent: #2d6a4f;
+    --accent2: #52b788;
+    --gold: #b5820a;
+    --warn: #c44b24;
+    --border: #e8e2d8;
+    --shadow: 0 2px 16px rgba(26,21,16,0.08);
+    --r: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+
+  h1 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--ink3);
+    margin-bottom: 24px;
+    letter-spacing: 0.02em;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--r);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    color: var(--ink3);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  /* Sliders */
+  .slider-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .slider-group {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .slider-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+
+  .slider-name {
+    font-size: 12px;
+    color: var(--ink2);
+  }
+
+  .slider-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--accent);
+  }
+
+  input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(to right, var(--accent2) 0%, var(--accent2) 50%, var(--border) 50%);
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid white;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.2);
+    cursor: pointer;
+  }
+
+  /* Index pills */
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .pill {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--ink2);
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .pill:hover { border-color: var(--accent2); color: var(--accent); }
+
+  .pill.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  /* Summary cards */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .summary-item {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 14px 12px;
+    border: 1px solid var(--border);
+  }
+
+  .sum-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--warn);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .sum-desc {
+    font-size: 10px;
+    color: var(--ink3);
+    line-height: 1.4;
+  }
+
+  .sum-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink2);
+    margin-bottom: 6px;
+  }
+
+  /* Age cards */
+  .age-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .age-card {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 12px 8px;
+    border: 2px solid var(--border);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .age-card:hover { border-color: var(--accent2); }
+
+  .age-card.highlight {
+    border-color: var(--accent);
+    background: #edf7f2;
+  }
+
+  .age-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin: 0 auto 6px;
+  }
+
+  .age-label { font-size: 10px; color: var(--ink3); margin-bottom: 4px; }
+
+  .age-amount {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+
+  .age-principal {
+    font-size: 9px;
+    color: var(--ink3);
+  }
+
+  /* Chart section */
+  .chart-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .tab {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--ink2);
+    transition: all 0.15s;
+  }
+
+  .tab.active {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: white;
+  }
+
+  .chart-wrap { position: relative; height: 300px; }
+
+  /* Income section */
+  .income-section {
+    border: 2px dashed var(--accent2);
+    border-radius: var(--r);
+    background: #f0faf5;
+  }
+
+  .income-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .income-icon {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  .income-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .income-subtitle {
+    font-size: 11px;
+    color: var(--ink3);
+  }
+
+  .income-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .income-field {
+    background: white;
+    border-radius: 10px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+  }
+
+  .income-field label {
+    display: block;
+    font-size: 11px;
+    color: var(--ink3);
+    margin-bottom: 6px;
+  }
+
+  .income-field-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .income-field span {
+    font-size: 13px;
+    color: var(--ink2);
+    font-weight: 500;
+  }
+
+  .income-field input[type=number] {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink);
+    background: transparent;
+    width: 100%;
+  }
+
+  .income-field input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .income-growth-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .income-growth-row label {
+    font-size: 12px;
+    color: var(--ink2);
+    white-space: nowrap;
+  }
+
+  input[type=range].green-slider {
+    flex: 1;
+    background: linear-gradient(to right, var(--accent2) 0%, var(--accent2) 30%, var(--border) 30%);
+  }
+
+  .crossover-box {
+    background: white;
+    border-radius: 10px;
+    padding: 14px 16px;
+    border: 1.5px solid var(--accent2);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .crossover-icon { font-size: 24px; }
+
+  .crossover-text .big {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 2px;
+  }
+
+  .crossover-text .small {
+    font-size: 11px;
+    color: var(--ink3);
+    line-height: 1.5;
+  }
+
+  .income-chart-wrap { position: relative; height: 280px; margin-top: 16px; }
+
+  /* Notes */
+  .notes {
+    font-size: 10px;
+    color: var(--ink3);
+    line-height: 1.8;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .notes strong { color: var(--ink2); }
+
+  @media (max-width: 500px) {
+    .summary-grid { grid-template-columns: 1fr 1fr; }
+    .age-grid { grid-template-columns: repeat(3, 1fr); }
+    .income-inputs { grid-template-columns: 1fr; }
+    .age-grid .age-card:last-child { display: none; }
+  }
+</style>
 </head>
-
 <body>
-    <header>
-        <nav>
-            <a href="/" class="logo">
-                <div class="logo-icon">✦</div>
-                <span class="logo-text">豆包 Markdown 转换器</span>
-                <span class="badge">v1.0</span>
-            </a>
-            <div class="nav-right">
-                <div class="auto-indicator">
-                    <span class="pulse"></span>
-                    实时转换
-                </div>
-                <a href="https://github.com/askxiaozhang/doubao-markdown-converter" target="_blank" class="github-link"
-                    title="在 GitHub 上查看">
-                    <svg height="24" width="24" viewBox="0 0 16 16" fill="currentColor">
-                        <path
-                            d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z">
-                        </path>
-                    </svg>
-                </a>
-            </div>
-        </nav>
-    </header>
 
-    <div class="container">
-        <div class="intro-section">
-            <h1>为什么需要这个工具？</h1>
-            <p>豆包（Doubao）导出的 Markdown 在数学公式的处理上与标准 Markdown（如 GitHub, Obsidian）略有不同。此工具通过以下规则进行智能转换：</p>
-            <ul>
-                <li><strong>自动纠正：</strong> 将豆包习惯使用的 <code>\( ... \)</code> 或 <code>$$ ... $$</code> 统一规范化。</li>
-                <li><strong>块级公式：</strong> 如果公式占据整行，转换为标准 <code>$$ ... $$</code> 块。</li>
-                <li><strong>行内公式：</strong> 如果公式嵌入在文字中，自动降级为单 <code>$ ... $</code>，防止排版溢出或解析错误。</li>
-            </ul>
-        </div>
+<h1>📈 定投复利计算器</h1>
+<p class="subtitle">晚十年开始定投，退休少多少？复利的力量一图看懂</p>
 
-        <div class="toolbar">
-            <button class="btn btn-secondary" onclick="loadExample()" title="加载示例">
-                📄 示例
-            </button>
-            <button class="btn btn-primary" onclick="convertMarkdown()" title="手动转换">
-                ⚡ 转换
-            </button>
-            <button class="btn btn-success" onclick="copyOutput()" title="复制结果">
-                📋 复制结果
-            </button>
-            <button class="btn btn-secondary" onclick="clearAll()" title="清空">
-                🗑️ 清空
-            </button>
-        </div>
-
-        <div class="editor-wrapper">
-            <div class="panel">
-                <div class="panel-header">
-                    <div class="panel-title">
-                        <span class="dot input-dot"></span>
-                        输入 · 豆包格式
-                    </div>
-                    <div class="panel-actions">
-                        <button class="icon-btn" onclick="pasteInput()" title="粘贴">📋</button>
-                        <button class="icon-btn" onclick="clearInput()" title="清空">✕</button>
-                    </div>
-                </div>
-                <textarea id="input"
-                    placeholder="在此粘贴豆包输出的 Markdown 内容...&#10;&#10;例如：&#10;\(E = mc^2\)&#10;&#10;支持行内公式 \(x^2\) 和独立行公式。"
-                    spellcheck="false"></textarea>
-            </div>
-
-            <div class="panel">
-                <div class="panel-header">
-                    <div class="panel-title">
-                        <span class="dot output-dot"></span>
-                        输出 · 标准 Markdown
-                    </div>
-                    <div class="panel-actions">
-                        <button class="icon-btn" onclick="copyOutput()" title="复制">📋</button>
-                    </div>
-                </div>
-                <div id="output" class="output-area"></div>
-            </div>
-        </div>
-
-        <div class="stats">
-            <span>输入: <strong id="stat-input">0</strong> 字符</span>
-            <span>输出: <strong id="stat-output">0</strong> 字符</span>
-            <span>转换: <strong id="stat-conversions">0</strong> 处</span>
-        </div>
+<!-- Controls -->
+<div class="card">
+  <div class="section-label">基本参数</div>
+  <div class="slider-row">
+    <div class="slider-group">
+      <div class="slider-top">
+        <span class="slider-name">每月定投金额</span>
+        <span class="slider-val" id="monthly-display">¥4,000</span>
+      </div>
+      <input type="range" id="monthly" min="500" max="20000" step="500" value="4000">
     </div>
-
-    <div class="toast" id="toast"></div>
-
-    <div class="donation-widget">
-        <div class="donation-button">☕</div>
-        <div class="donation-card">
-            <h3>请喝咖啡</h3>
-            <p>如果这个小工具帮到了你，欢迎支持作者进一步优化！</p>
-            <div class="qr-container">
-                <div class="qr-item">
-                    <!-- 替换下方 src 为你的微信收款码路径 -->
-                    <img src="/static/wechat-qr.png" style="width:100%; border-radius:8px;">
-                    <!-- <div class="qr-placeholder">微信收款码<br>(待替换)</div> -->
-                    <span class="wechat-text">微信支付</span>
-                </div>
-                <div class="qr-item">
-                    <!-- 替换下方 src 为你的支付宝收款码路径 -->
-                    <img src="/static/alipay-qr.png" style="width:100%; border-radius:8px;">
-                    <!-- <div class="qr-placeholder">支付宝收款码<br>(待替换)</div> -->
-                    <span class="alipay-text">支付宝</span>
-                </div>
-            </div>
-        </div>
+    <div class="slider-group">
+      <div class="slider-top">
+        <span class="slider-name">退休年龄</span>
+        <span class="slider-val" id="retire-display">65岁</span>
+      </div>
+      <input type="range" id="retire" min="50" max="75" step="1" value="65">
     </div>
+  </div>
+  <div class="section-label" style="margin-top:4px">选择指数收益假设</div>
+  <div class="pills">
+    <div class="pill active" data-rate="0.07">沪深300 乐观 +7%</div>
+    <div class="pill" data-rate="0.01">沪深300 悲观 +1%</div>
+    <div class="pill" data-rate="0.10">标普500 乐观 +10%</div>
+    <div class="pill" data-rate="0.039">标普500 悲观 +3.9%</div>
+    <div class="pill" data-rate="0.05">自定义 +5%</div>
+  </div>
+</div>
 
-    <script>
-        const inputEl = document.getElementById('input');
-        const outputEl = document.getElementById('output');
-        const statInput = document.getElementById('stat-input');
-        const statOutput = document.getElementById('stat-output');
-        const statConversions = document.getElementById('stat-conversions');
+<!-- Summary -->
+<div class="card">
+  <div class="section-label">核心对比：30岁 vs 40岁开始</div>
+  <div class="summary-grid">
+    <div class="summary-item">
+      <div class="sum-label">早10年的代价</div>
+      <div class="sum-val" id="sum-gap">¥396万</div>
+      <div class="sum-desc">30岁 vs 40岁开始<br>少了这么多</div>
+    </div>
+    <div class="summary-item">
+      <div class="sum-label">多投入本金</div>
+      <div class="sum-val" id="sum-principal" style="color:var(--gold)">¥48万</div>
+      <div class="sum-desc">30岁比40岁多定投<br>的总金额</div>
+    </div>
+    <div class="summary-item">
+      <div class="sum-label">复利放大倍数</div>
+      <div class="sum-val" id="sum-ratio" style="color:var(--accent)">88%</div>
+      <div class="sum-desc">差额中有多少<br>是复利贡献</div>
+    </div>
+  </div>
 
-        // Real-time conversion on input
-        inputEl.addEventListener('input', () => {
-            convertMarkdown();
-        });
+  <!-- Age cards -->
+  <div class="section-label">各年龄开始定投，退休时总资产</div>
+  <div class="age-grid" id="age-grid"></div>
 
-        function convertMarkdown() {
-            const text = inputEl.value;
-            if (!text.trim()) {
-                outputEl.textContent = '';
-                updateStats(0, 0, 0);
-                return;
+  <!-- Chart -->
+  <div class="chart-tabs">
+    <div class="tab active" data-chart="total">退休时总资产对比</div>
+    <div class="tab" data-chart="growth">资产增长轨迹</div>
+  </div>
+  <div class="chart-wrap">
+    <canvas id="mainChart"></canvas>
+  </div>
+</div>
+
+<!-- Income Crossover -->
+<div class="card income-section">
+  <div class="income-header">
+    <div class="income-icon">💰</div>
+    <div>
+      <div class="income-title">你的收入 vs 复利收益</div>
+      <div class="income-subtitle">输入年收入，看看什么时候投资回报超过你的劳动所得</div>
+    </div>
+  </div>
+
+  <div class="income-inputs">
+    <div class="income-field">
+      <label>你的当前年收入</label>
+      <div class="income-field-row">
+        <span>¥</span>
+        <input type="number" id="annual-income" value="150000" min="10000" step="10000">
+        <span style="font-size:11px;color:var(--ink3)">元/年</span>
+      </div>
+    </div>
+    <div class="income-field">
+      <label>开始定投年龄</label>
+      <div class="income-field-row">
+        <input type="number" id="start-age" value="30" min="18" max="50" style="text-align:center">
+        <span>岁</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="income-field" style="background:white;border-radius:10px;padding:12px 14px;border:1.5px solid var(--border);margin-bottom:12px">
+    <div class="income-growth-row">
+      <label>年收入增长率</label>
+      <input type="range" id="income-growth" class="green-slider" min="0" max="0.15" step="0.01" value="0.03" style="flex:1">
+      <span id="income-growth-display" style="font-family:'DM Mono',monospace;font-size:14px;color:var(--accent);min-width:36px">3%</span>
+    </div>
+  </div>
+
+  <div class="crossover-box" id="crossover-box">
+    <div class="crossover-icon">🎯</div>
+    <div class="crossover-text">
+      <div class="big" id="crossover-result">计算中...</div>
+      <div class="small" id="crossover-detail"></div>
+    </div>
+  </div>
+
+  <div class="income-chart-wrap">
+    <canvas id="incomeChart"></canvas>
+  </div>
+</div>
+
+<!-- Notes -->
+<div class="card">
+  <div class="notes">
+    <strong>定投逻辑：</strong>每月固定投入，年化复利滚动，红利全部再投入，退休时一次性计算总资产。<br>
+    <strong>关键发现：</strong>早10年开始不只是多投了本金，更重要的是复利多运行了10年——复利的威力在后段是指数级的。<br>
+    <strong>收入跑不过复利：</strong>当你的年投资回报超过年收入时，理论上即使不工作，资产也在替你赚钱。<br>
+    <strong>模型说明：</strong>使用税后实际回报率，未考虑通胀对资产购买力的影响。
+  </div>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────
+let state = {
+  monthly: 4000,
+  retireAge: 65,
+  rate: 0.07,
+  incomeAnnual: 150000,
+  incomeGrowth: 0.03,
+  startAge: 30,
+  chartMode: 'total'
+};
+
+const AGES = [25, 30, 35, 40, 45];
+const COLORS = ['#2d6a4f','#52b788','#b7e4c7','#f4a261','#e76f51'];
+
+// ─── Calculations ─────────────────────────────────────────────
+function fv(monthly, annualRate, years) {
+  if (years <= 0) return 0;
+  const r = annualRate / 12;
+  const n = years * 12;
+  if (r === 0) return monthly * n;
+  return monthly * ((Math.pow(1 + r, n) - 1) / r);
+}
+
+function principal(monthly, years) {
+  return monthly * 12 * years;
+}
+
+function fmt(val) {
+  if (val >= 1e8) return (val / 1e8).toFixed(1) + '亿';
+  if (val >= 1e4) return (val / 10000).toFixed(0) + '万';
+  return val.toFixed(0);
+}
+
+function calcAll() {
+  return AGES.map(age => {
+    const years = state.retireAge - age;
+    return {
+      age,
+      total: fv(state.monthly, state.rate, years),
+      principal: principal(state.monthly, years),
+      years
+    };
+  });
+}
+
+// ─── Update UI ────────────────────────────────────────────────
+function updateSliders() {
+  const mSlider = document.getElementById('monthly');
+  const pct = (mSlider.value - mSlider.min) / (mSlider.max - mSlider.min) * 100;
+  mSlider.style.background = `linear-gradient(to right, #52b788 0%, #52b788 ${pct}%, #e8e2d8 ${pct}%)`;
+
+  const rSlider = document.getElementById('retire');
+  const pct2 = (rSlider.value - rSlider.min) / (rSlider.max - rSlider.min) * 100;
+  rSlider.style.background = `linear-gradient(to right, #52b788 0%, #52b788 ${pct2}%, #e8e2d8 ${pct2}%)`;
+}
+
+function updateSummary(data) {
+  const d30 = data.find(d => d.age === 30);
+  const d40 = data.find(d => d.age === 40);
+  if (!d30 || !d40) return;
+  const gap = d30.total - d40.total;
+  const princGap = d30.principal - d40.principal;
+  const compoundContrib = gap > 0 ? ((gap - princGap) / gap * 100).toFixed(0) : 0;
+
+  document.getElementById('sum-gap').textContent = '¥' + fmt(gap);
+  document.getElementById('sum-principal').textContent = '¥' + fmt(princGap);
+  document.getElementById('sum-ratio').textContent = compoundContrib + '%';
+}
+
+function updateAgeGrid(data) {
+  const grid = document.getElementById('age-grid');
+  grid.innerHTML = data.map((d, i) => `
+    <div class="age-card ${i===1?'highlight':''}">
+      <div class="age-dot" style="background:${COLORS[i]}"></div>
+      <div class="age-label">${d.age}岁开始</div>
+      <div class="age-amount">¥${fmt(d.total)}</div>
+      <div class="age-principal">本金¥${fmt(d.principal)}</div>
+    </div>
+  `).join('');
+}
+
+// ─── Main Chart ───────────────────────────────────────────────
+let mainChartInst = null;
+
+function updateMainChart(data) {
+  const ctx = document.getElementById('mainChart').getContext('2d');
+
+  if (mainChartInst) mainChartInst.destroy();
+
+  if (state.chartMode === 'total') {
+    mainChartInst = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: data.map(d => d.age + '岁开始'),
+        datasets: [{
+          label: '复利收益',
+          data: data.map(d => d.total - d.principal),
+          backgroundColor: COLORS.map(c => c + 'cc'),
+          borderRadius: 6,
+          borderSkipped: false
+        },{
+          label: '投入本金',
+          data: data.map(d => d.principal),
+          backgroundColor: '#e8e2d888',
+          borderRadius: 6,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }},
+          tooltip: {
+            callbacks: {
+              afterBody: (items) => {
+                const i = items[0].dataIndex;
+                return '总资产: ¥' + fmt(data[i].total);
+              }
             }
-
-            const { result, count } = convertDoubaoToStandard(text);
-            outputEl.textContent = result;
-            updateStats(text.length, result.length, count);
+          }
+        },
+        scales: {
+          x: { stacked: true, grid: { display: false }, ticks: { font: { size: 11 }}},
+          y: { stacked: true, grid: { color: '#e8e2d8' },
+               ticks: { callback: v => '¥' + fmt(v), font: { size: 10 }}}
         }
+      }
+    });
+  } else {
+    // Growth trajectory
+    const maxAge = state.retireAge;
+    const labels = [];
+    for (let a = 20; a <= maxAge; a += 5) labels.push(a + '岁');
 
-        /**
-         * Convert Doubao markdown to standard markdown.
-         *
-         * Rules:
-         * 1. If \( ... \) is the ONLY content on a line (possibly surrounded by whitespace),
-         *    convert to $$ ... $$ (display math / block formula).
-         * 2. If \( ... \) appears inline (mixed with other text on the same line),
-         *    convert to $ ... $ (inline math).
-         * 3. Everything else stays unchanged.
-         */
-        function convertDoubaoToStandard(text) {
-            let count = 0;
-            const lines = text.split('\n');
-            const resultLines = [];
+    const datasets = data.map((d, i) => {
+      const pts = [];
+      for (let a = 20; a <= maxAge; a += 5) {
+        const yearsIn = Math.max(0, a - d.age);
+        pts.push(fv(state.monthly, state.rate, yearsIn) / 10000);
+      }
+      return {
+        label: d.age + '岁开始',
+        data: pts,
+        borderColor: COLORS[i],
+        backgroundColor: 'transparent',
+        borderWidth: 2.5,
+        pointRadius: 0,
+        tension: 0.4
+      };
+    });
 
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i];
+    mainChartInst = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 20 }},
+          tooltip: { callbacks: { label: item => item.dataset.label + ': ¥' + item.raw.toFixed(0) + '万' }}
+        },
+        scales: {
+          x: { grid: { color: '#e8e2d840' }, ticks: { font: { size: 10 }}},
+          y: { grid: { color: '#e8e2d8' }, ticks: { callback: v => '¥' + v + '万', font: { size: 10 }}}
+        }
+      }
+    });
+  }
+}
 
-                // Check if it's a block formula: only whitespace + formula
-                // Matches ^\s*\(...\)\s*$ OR ^\s*$$...$$\s*$
-                const blockMatch = line.match(/^(\s*)(?:\\\(|\$\$)(.+?)(?:\\\)|\$\$)(\s*)$/);
+// ─── Income Chart ─────────────────────────────────────────────
+let incomeChartInst = null;
 
-                if (blockMatch) {
-                    // It's a standalone block formula - always use $$ ... $$
-                    resultLines.push(blockMatch[1] + '$$' + blockMatch[2] + '$$' + blockMatch[3]);
-                    count++;
-                } else {
-                    // Inline replacement: convert both \(...\) and $$...$$ to $...$
-                    let converted = line;
+function updateIncomeSection() {
+  const startAge = state.startAge;
+  const annualIncome = state.incomeAnnual;
+  const incomeGrowth = state.incomeGrowth;
+  const retireAge = state.retireAge;
+  const rate = state.rate;
+  const monthly = state.monthly;
 
-                    // Replace \( ... \)
-                    converted = converted.replace(/\\\((.+?)\\\)/g, (match, inner) => {
-                        count++;
-                        return '$' + inner + '$';
-                    });
+  const ages = [];
+  const portfolioReturns = []; // annual return = portfolio value * rate
+  const incomes = [];
 
-                    // Replace $$ ... $$ (when not a standalone line)
-                    converted = converted.replace(/\$\$(.+?)\$\$/g, (match, inner) => {
-                        count++;
-                        return '$' + inner + '$';
-                    });
+  let crossoverAge = null;
+  let crossoverPortfolio = null;
 
-                    resultLines.push(converted);
-                }
+  for (let age = startAge; age <= retireAge; age++) {
+    ages.push(age + '岁');
+    const years = age - startAge;
+    const portVal = fv(monthly, rate, years);
+    const annReturn = portVal * rate;
+    const inc = annualIncome * Math.pow(1 + incomeGrowth, years);
+
+    portfolioReturns.push(Math.round(annReturn / 10000));
+    incomes.push(Math.round(inc / 10000));
+
+    if (crossoverAge === null && annReturn >= inc) {
+      crossoverAge = age;
+      crossoverPortfolio = portVal;
+    }
+  }
+
+  // Update crossover box
+  const box = document.getElementById('crossover-result');
+  const detail = document.getElementById('crossover-detail');
+
+  if (crossoverAge !== null) {
+    const yearsToGo = crossoverAge - startAge;
+    box.textContent = `${crossoverAge}岁时，投资年回报超过年收入！`;
+    detail.textContent = `距今约 ${yearsToGo} 年后 · 届时投资组合约 ¥${fmt(crossoverPortfolio)} · 年回报超过年薪，实现"钱生钱"自由`;
+    document.getElementById('crossover-box').style.borderColor = 'var(--accent)';
+    box.style.color = 'var(--accent)';
+  } else {
+    box.textContent = '退休前投资年回报未超过年收入';
+    detail.textContent = '尝试增加月定投金额，或选择更高回报率的指数。';
+    document.getElementById('crossover-box').style.borderColor = 'var(--warn)';
+    box.style.color = 'var(--warn)';
+  }
+
+  // Draw income chart
+  const ctx2 = document.getElementById('incomeChart').getContext('2d');
+  if (incomeChartInst) incomeChartInst.destroy();
+
+  incomeChartInst = new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: ages,
+      datasets: [
+        {
+          label: '投资年化回报 (万)',
+          data: portfolioReturns,
+          borderColor: '#2d6a4f',
+          backgroundColor: 'rgba(45,106,79,0.08)',
+          fill: true,
+          borderWidth: 2.5,
+          pointRadius: 0,
+          tension: 0.4
+        },
+        {
+          label: '年收入 (万)',
+          data: incomes,
+          borderColor: '#e76f51',
+          backgroundColor: 'rgba(231,111,81,0.06)',
+          fill: true,
+          borderWidth: 2,
+          borderDash: [6, 4],
+          pointRadius: 0,
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 20 }},
+        tooltip: {
+          callbacks: {
+            label: item => item.dataset.label + ': ¥' + item.raw + '万'
+          }
+        },
+        annotation: crossoverAge ? {
+          annotations: {
+            line1: {
+              type: 'line',
+              xMin: crossoverAge - startAge,
+              xMax: crossoverAge - startAge,
+              borderColor: '#2d6a4f',
+              borderWidth: 1.5,
+              borderDash: [4, 4],
+              label: {
+                display: true,
+                content: '🎯 交叉点',
+                position: 'start',
+                backgroundColor: '#2d6a4f',
+                color: 'white',
+                font: { size: 10 }
+              }
             }
+          }
+        } : {}
+      },
+      scales: {
+        x: { grid: { color: '#e8e2d840' }, ticks: { font: { size: 10 }, maxTicksLimit: 10 }},
+        y: { grid: { color: '#e8e2d8' }, ticks: { callback: v => '¥' + v + '万', font: { size: 10 }}}
+      }
+    }
+  });
+}
 
-            return { result: resultLines.join('\n'), count };
-        }
+// ─── Full Render ──────────────────────────────────────────────
+function render() {
+  const data = calcAll();
+  updateSummary(data);
+  updateAgeGrid(data);
+  updateMainChart(data);
+  updateIncomeSection();
+}
 
-        function updateStats(inputLen, outputLen, conversions) {
-            statInput.textContent = inputLen;
-            statOutput.textContent = outputLen;
-            statConversions.textContent = conversions;
-        }
+// ─── Event Listeners ──────────────────────────────────────────
+document.getElementById('monthly').addEventListener('input', e => {
+  state.monthly = +e.target.value;
+  document.getElementById('monthly-display').textContent = '¥' + (+e.target.value).toLocaleString();
+  updateSliders(); render();
+});
 
-        function copyOutput() {
-            const text = outputEl.textContent;
-            if (!text) {
-                showToast('没有内容可复制');
-                return;
-            }
-            navigator.clipboard.writeText(text).then(() => {
-                showToast('✓ 已复制到剪贴板');
-            }).catch(() => {
-                // Fallback
-                const ta = document.createElement('textarea');
-                ta.value = text;
-                document.body.appendChild(ta);
-                ta.select();
-                document.execCommand('copy');
-                document.body.removeChild(ta);
-                showToast('✓ 已复制到剪贴板');
-            });
-        }
+document.getElementById('retire').addEventListener('input', e => {
+  state.retireAge = +e.target.value;
+  document.getElementById('retire-display').textContent = e.target.value + '岁';
+  updateSliders(); render();
+});
 
-        async function pasteInput() {
-            try {
-                const text = await navigator.clipboard.readText();
-                inputEl.value = text;
-                convertMarkdown();
-                showToast('✓ 已粘贴');
-            } catch (e) {
-                showToast('无法读取剪贴板');
-            }
-        }
+document.querySelectorAll('.pill').forEach(p => {
+  p.addEventListener('click', () => {
+    document.querySelectorAll('.pill').forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+    state.rate = +p.dataset.rate;
+    render();
+  });
+});
 
-        function clearInput() {
-            inputEl.value = '';
-            outputEl.textContent = '';
-            updateStats(0, 0, 0);
-        }
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    state.chartMode = t.dataset.chart;
+    render();
+  });
+});
 
-        function clearAll() {
-            clearInput();
-            showToast('已清空');
-        }
+document.getElementById('annual-income').addEventListener('input', e => {
+  state.incomeAnnual = +e.target.value || 100000;
+  render();
+});
 
-        function loadExample() {
-            inputEl.value = `公式：
+document.getElementById('start-age').addEventListener('input', e => {
+  state.startAge = Math.min(+e.target.value || 25, state.retireAge - 1);
+  render();
+});
 
-$$P(x_1,\\dots,x_T) = \\prod_{t=1}^T P(x_t \\mid x_{t-1})$$
+document.getElementById('income-growth').addEventListener('input', e => {
+  state.incomeGrowth = +e.target.value;
+  const pct = (+e.target.value * 100).toFixed(0);
+  document.getElementById('income-growth-display').textContent = pct + '%';
+  const slider = e.target;
+  const p = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+  slider.style.background = `linear-gradient(to right, #52b788 0%, #52b788 ${p}%, #e8e2d8 ${p}%)`;
+  render();
+});
 
-（当$$P(x_1 \\mid x_0)=P(x_1)$$，也就是第一步只和初始状态有关）
-
-用天气举例：
-
-我们想算“第一天晴天 → 第二天阴天 → 第三天雨天”的概率：
-
-- 第一天晴天：$$P(S)$$
-
-行内公式示例：能量公式 \\(E = mc^2\\) 也是支持的。
-
-混合示例：
-\\(\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}\\)`;
-            convertMarkdown();
-            showToast('✓ 已加载示例');
-        }
-
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
-        }
-    </script>
+// ─── Init ─────────────────────────────────────────────────────
+updateSliders();
+render();
+</script>
 </body>
-
 </html>
