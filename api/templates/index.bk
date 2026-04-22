@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>豆包 Markdown 转换器</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #16161f;
+            --bg-input: #1a1a25;
+            --border: #2a2a3a;
+            --border-hover: #3a3a5a;
+            --text-primary: #e8e8f0;
+            --text-secondary: #8888a8;
+            --text-muted: #5a5a7a;
+            --accent: #6c5ce7;
+            --accent-glow: rgba(108, 92, 231, 0.25);
+            --accent-light: #a29bfe;
+            --success: #00cec9;
+            --success-glow: rgba(0, 206, 201, 0.2);
+            --gradient-start: #6c5ce7;
+            --gradient-end: #00cec9;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(ellipse 600px 400px at 20% 20%, rgba(108, 92, 231, 0.08), transparent),
+                radial-gradient(ellipse 500px 300px at 80% 80%, rgba(0, 206, 201, 0.06), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Header */
+        header {
+            position: relative;
+            z-index: 10;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            background: rgba(10, 10, 15, 0.8);
+        }
+
+        nav {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+
+        .logo-text {
+            font-size: 1.15rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: #fff;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .github-link {
+            color: var(--text-secondary);
+            font-size: 1.4rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .github-link:hover {
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        /* Main content */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem 2rem;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 70px);
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.25rem;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            outline: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: #fff;
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px var(--accent-glow);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--border-hover);
+            background: var(--bg-input);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: #0a0a0f;
+            box-shadow: 0 4px 20px var(--success-glow);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px var(--success-glow);
+        }
+
+        /* Editor area */
+        .editor-wrapper {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            min-height: 0;
+        }
+
+        .panel {
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: border-color 0.3s ease;
+        }
+
+        .panel:hover {
+            border-color: var(--border-hover);
+        }
+
+        .panel:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.85rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .panel-title .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .input-dot {
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .output-dot {
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success-glow);
+        }
+
+        .panel-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-card);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+        }
+
+        .icon-btn:hover {
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+            background: var(--bg-input);
+        }
+
+        textarea {
+            flex: 1;
+            width: 100%;
+            padding: 1.25rem;
+            background: transparent;
+            border: none;
+            outline: none;
+            resize: none;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', 'SF Mono', Monaco, monospace;
+            font-size: 0.85rem;
+            line-height: 1.7;
+            tab-size: 4;
+        }
+
+        textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .output-area {
+            flex: 1;
+            padding: 1.25rem;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', 'SF Mono', Monaco, monospace;
+            font-size: 0.85rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: var(--text-primary);
+        }
+
+        .output-area:empty::before {
+            content: '转换后的标准 Markdown 将显示在这里...';
+            color: var(--text-muted);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            padding: 0.75rem 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--success);
+            border-radius: 12px;
+            color: var(--success);
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border-hover);
+        }
+
+        /* Stats bar */
+        .stats {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            padding: 0.7rem;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            letter-spacing: 0.3px;
+        }
+
+        .stats span {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .editor-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 1rem;
+                height: auto;
+            }
+
+            .panel {
+                min-height: 40vh;
+            }
+
+            nav {
+                padding: 0.75rem 1rem;
+            }
+        }
+
+        /* Auto-convert indicator */
+        .auto-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            padding: 0.3rem 0.7rem;
+            border-radius: 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .auto-indicator .pulse {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        /* Intro Section Styles */
+        .intro-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: linear-gradient(145deg, rgba(108, 92, 231, 0.05) 0%, rgba(0, 206, 201, 0.05) 100%);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .intro-section h1 {
+            font-size: 1.2rem;
+            margin-bottom: 0.75rem;
+            color: var(--accent-light);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .intro-section p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            line-height: 1.6;
+        }
+
+        .intro-section ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .intro-section li {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .intro-section li::before {
+            content: '✦';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+            font-size: 0.8rem;
+        }
+
+        .intro-section b,
+        .intro-section strong {
+            color: var(--success);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                height: auto;
+            }
+        }
+
+        /* Donation Widget Styles */
+        .donation-widget {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 100;
+        }
+
+        .donation-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            background: linear-gradient(135deg, #ff9f43, #ff6b6b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(255, 107, 107, 0.4);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 1.5rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .donation-button:hover {
+            transform: scale(1.1) rotate(10deg);
+            box-shadow: 0 6px 25px rgba(255, 107, 107, 0.6);
+        }
+
+        .donation-card {
+            position: absolute;
+            bottom: calc(100% + 1.25rem);
+            right: 0;
+            width: 400px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 1.5rem;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px) scale(0.9);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            backdrop-filter: blur(10px);
+        }
+
+        .donation-widget:hover .donation-card {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+
+        .donation-card h3 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+            text-align: center;
+        }
+
+        .donation-card p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .qr-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .qr-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .qr-placeholder {
+            width: 100%;
+            aspect-ratio: 1;
+            background: #f0f0f0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: #333;
+            font-weight: 600;
+            text-align: center;
+            padding: 0.5rem;
+            border: 2px dashed #ccc;
+        }
+
+        .qr-item span {
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .wechat-text {
+            color: #07c160;
+        }
+
+        .alipay-text {
+            color: #1677ff;
+        }
+
+        @media (max-width: 600px) {
+            .donation-widget {
+                bottom: 1rem;
+                right: 1rem;
+            }
+
+            .donation-card {
+                right: -0.5rem;
+                width: 240px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo">
+                <div class="logo-icon">✦</div>
+                <span class="logo-text">豆包 Markdown 转换器</span>
+                <span class="badge">v1.0</span>
+            </a>
+            <div class="nav-right">
+                <div class="auto-indicator">
+                    <span class="pulse"></span>
+                    实时转换
+                </div>
+                <a href="https://github.com/askxiaozhang/doubao-markdown-converter" target="_blank" class="github-link"
+                    title="在 GitHub 上查看">
+                    <svg height="24" width="24" viewBox="0 0 16 16" fill="currentColor">
+                        <path
+                            d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z">
+                        </path>
+                    </svg>
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="intro-section">
+            <h1>为什么需要这个工具？</h1>
+            <p>豆包（Doubao）导出的 Markdown 在数学公式的处理上与标准 Markdown（如 GitHub, Obsidian）略有不同。此工具通过以下规则进行智能转换：</p>
+            <ul>
+                <li><strong>自动纠正：</strong> 将豆包习惯使用的 <code>\( ... \)</code> 或 <code>$$ ... $$</code> 统一规范化。</li>
+                <li><strong>块级公式：</strong> 如果公式占据整行，转换为标准 <code>$$ ... $$</code> 块。</li>
+                <li><strong>行内公式：</strong> 如果公式嵌入在文字中，自动降级为单 <code>$ ... $</code>，防止排版溢出或解析错误。</li>
+            </ul>
+        </div>
+
+        <div class="toolbar">
+            <button class="btn btn-secondary" onclick="loadExample()" title="加载示例">
+                📄 示例
+            </button>
+            <button class="btn btn-primary" onclick="convertMarkdown()" title="手动转换">
+                ⚡ 转换
+            </button>
+            <button class="btn btn-success" onclick="copyOutput()" title="复制结果">
+                📋 复制结果
+            </button>
+            <button class="btn btn-secondary" onclick="clearAll()" title="清空">
+                🗑️ 清空
+            </button>
+        </div>
+
+        <div class="editor-wrapper">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span class="dot input-dot"></span>
+                        输入 · 豆包格式
+                    </div>
+                    <div class="panel-actions">
+                        <button class="icon-btn" onclick="pasteInput()" title="粘贴">📋</button>
+                        <button class="icon-btn" onclick="clearInput()" title="清空">✕</button>
+                    </div>
+                </div>
+                <textarea id="input"
+                    placeholder="在此粘贴豆包输出的 Markdown 内容...&#10;&#10;例如：&#10;\(E = mc^2\)&#10;&#10;支持行内公式 \(x^2\) 和独立行公式。"
+                    spellcheck="false"></textarea>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span class="dot output-dot"></span>
+                        输出 · 标准 Markdown
+                    </div>
+                    <div class="panel-actions">
+                        <button class="icon-btn" onclick="copyOutput()" title="复制">📋</button>
+                    </div>
+                </div>
+                <div id="output" class="output-area"></div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <span>输入: <strong id="stat-input">0</strong> 字符</span>
+            <span>输出: <strong id="stat-output">0</strong> 字符</span>
+            <span>转换: <strong id="stat-conversions">0</strong> 处</span>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="donation-widget">
+        <div class="donation-button">☕</div>
+        <div class="donation-card">
+            <h3>请喝咖啡</h3>
+            <p>如果这个小工具帮到了你，欢迎支持作者进一步优化！</p>
+            <div class="qr-container">
+                <div class="qr-item">
+                    <!-- 替换下方 src 为你的微信收款码路径 -->
+                    <img src="/static/wechat-qr.png" style="width:100%; border-radius:8px;">
+                    <!-- <div class="qr-placeholder">微信收款码<br>(待替换)</div> -->
+                    <span class="wechat-text">微信支付</span>
+                </div>
+                <div class="qr-item">
+                    <!-- 替换下方 src 为你的支付宝收款码路径 -->
+                    <img src="/static/alipay-qr.png" style="width:100%; border-radius:8px;">
+                    <!-- <div class="qr-placeholder">支付宝收款码<br>(待替换)</div> -->
+                    <span class="alipay-text">支付宝</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const inputEl = document.getElementById('input');
+        const outputEl = document.getElementById('output');
+        const statInput = document.getElementById('stat-input');
+        const statOutput = document.getElementById('stat-output');
+        const statConversions = document.getElementById('stat-conversions');
+
+        // Real-time conversion on input
+        inputEl.addEventListener('input', () => {
+            convertMarkdown();
+        });
+
+        function convertMarkdown() {
+            const text = inputEl.value;
+            if (!text.trim()) {
+                outputEl.textContent = '';
+                updateStats(0, 0, 0);
+                return;
+            }
+
+            const { result, count } = convertDoubaoToStandard(text);
+            outputEl.textContent = result;
+            updateStats(text.length, result.length, count);
+        }
+
+        /**
+         * Convert Doubao markdown to standard markdown.
+         *
+         * Rules:
+         * 1. If \( ... \) is the ONLY content on a line (possibly surrounded by whitespace),
+         *    convert to $$ ... $$ (display math / block formula).
+         * 2. If \( ... \) appears inline (mixed with other text on the same line),
+         *    convert to $ ... $ (inline math).
+         * 3. Everything else stays unchanged.
+         */
+        function convertDoubaoToStandard(text) {
+            let count = 0;
+            const lines = text.split('\n');
+            const resultLines = [];
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+
+                // Check if it's a block formula: only whitespace + formula
+                // Matches ^\s*\(...\)\s*$ OR ^\s*$$...$$\s*$
+                const blockMatch = line.match(/^(\s*)(?:\\\(|\$\$)(.+?)(?:\\\)|\$\$)(\s*)$/);
+
+                if (blockMatch) {
+                    // It's a standalone block formula - always use $$ ... $$
+                    resultLines.push(blockMatch[1] + '$$' + blockMatch[2] + '$$' + blockMatch[3]);
+                    count++;
+                } else {
+                    // Inline replacement: convert both \(...\) and $$...$$ to $...$
+                    let converted = line;
+
+                    // Replace \( ... \)
+                    converted = converted.replace(/\\\((.+?)\\\)/g, (match, inner) => {
+                        count++;
+                        return '$' + inner + '$';
+                    });
+
+                    // Replace $$ ... $$ (when not a standalone line)
+                    converted = converted.replace(/\$\$(.+?)\$\$/g, (match, inner) => {
+                        count++;
+                        return '$' + inner + '$';
+                    });
+
+                    resultLines.push(converted);
+                }
+            }
+
+            return { result: resultLines.join('\n'), count };
+        }
+
+        function updateStats(inputLen, outputLen, conversions) {
+            statInput.textContent = inputLen;
+            statOutput.textContent = outputLen;
+            statConversions.textContent = conversions;
+        }
+
+        function copyOutput() {
+            const text = outputEl.textContent;
+            if (!text) {
+                showToast('没有内容可复制');
+                return;
+            }
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('✓ 已复制到剪贴板');
+            }).catch(() => {
+                // Fallback
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('✓ 已复制到剪贴板');
+            });
+        }
+
+        async function pasteInput() {
+            try {
+                const text = await navigator.clipboard.readText();
+                inputEl.value = text;
+                convertMarkdown();
+                showToast('✓ 已粘贴');
+            } catch (e) {
+                showToast('无法读取剪贴板');
+            }
+        }
+
+        function clearInput() {
+            inputEl.value = '';
+            outputEl.textContent = '';
+            updateStats(0, 0, 0);
+        }
+
+        function clearAll() {
+            clearInput();
+            showToast('已清空');
+        }
+
+        function loadExample() {
+            inputEl.value = `公式：
+
+$$P(x_1,\\dots,x_T) = \\prod_{t=1}^T P(x_t \\mid x_{t-1})$$
+
+（当$$P(x_1 \\mid x_0)=P(x_1)$$，也就是第一步只和初始状态有关）
+
+用天气举例：
+
+我们想算“第一天晴天 → 第二天阴天 → 第三天雨天”的概率：
+
+- 第一天晴天：$$P(S)$$
+
+行内公式示例：能量公式 \\(E = mc^2\\) 也是支持的。
+
+混合示例：
+\\(\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}\\)`;
+            convertMarkdown();
+            showToast('✓ 已加载示例');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+    </script>
+</body>
+
+</html>
